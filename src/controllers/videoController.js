@@ -2,8 +2,7 @@ import Video, { formatHashtags } from "../models/Video";
 
 export const home = async (req, res) => {
     const videos = await Video.find({}).sort({createdAt: "desc"});
-    console.log(videos);
-    return res.render("home", { pageTitle: videos.title , videos });
+    return res.render("home", { pageTitle: `Home` , videos });
 }
 export const watch = async (req, res) => {
     const { id } = req.params;
