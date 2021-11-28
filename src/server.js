@@ -2,10 +2,10 @@ import express from "express";
 import morgan from "morgan";
 import session from "express-session";
 import MongoStore from "connect-mongo";
-import globalRouter from "./routers/rootRouter"
 import videoRouter from "./routers/videoRouter"
 import userRouter from "./routers/userRouter"
 import { localMiddleware } from "./middlewares";
+import rootRouter from "./routers/rootRouter";
 
 // console.log(process.cwd());
 const app = express();
@@ -27,7 +27,8 @@ app.use(
 );
  
 app.use(localMiddleware);
-app.use("/", globalRouter);
+app.use("/uploads", express.static("uploads"))
+app.use("/", rootRouter);
 app.use("/videos", videoRouter);
 app.use("/users", userRouter);
 

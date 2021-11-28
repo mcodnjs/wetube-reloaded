@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import User from "../models/user";
+import Video from "../models/Video";
 import bcrypt from "bcrypt";
 
 export const getJoin = (req, res) => res.render("join", {pageTitle: "Join"});
@@ -114,21 +115,20 @@ export const finishGithubLogin = async (req, res) => {
             return res.redirect("/login");
         }
         let user = await User.findOne({ email: emailObj.email });
-        if(user) {
-            const user = await User.create({
+        if(!user) {
+            user = await User.create({
                 name: userData.name,
-                avrtalUrl: userData.avatar_url,
+                avatarUrl: userData.avatar_url,
                 username: userData.login,
                 email: emailObj.email,
                 password: "",
                 socialOnly: true,
                 location: userData.location,
             });
-        } else {
-            req.session.loggedIn = true;
-            req.session.user = userData;
-            return res.redirect("/");
-        }
+        } 
+        req.session.loggedIn = true;
+        req.session.user = user;
+        return res.redirect("/");
     }else {
         return res.redirect("/login");
     }
@@ -139,5 +139,128 @@ export const logout = (req, res) => {
     return res.redirect("/");
 }
 
-export const edit = (req, res) => res.send("Edit User");
-export const see = (req, res) => res.send("See User");
+export const getEdit = (req, res) => {
+    return res.render("edit-profile", {pageTitle: " Edit Profile", user: req.session.user});
+}
+
+export const postEdit = async (req, res) => {
+    const { 
+        session: { user: {_id, avatarUrl }, },
+        body: {name, email, username, location}, // form으로부터 받음
+        file,
+    } = req;
+
+    const updatedUser = await User.findByIdAndUpdate(
+        _id,
+        {
+            avatarUrl: file ? file.path :avatarUrl,
+            name,
+            email,
+            username,
+            location,
+        },
+        { new: true }
+    );
+    req.session.user = updatedUser;
+    return res.redirect("/users/edit");
+    
+   /*
+    // 검사해야하는거: name, email, username
+    // const newUsername = req.body.username;
+    // const newEmail = req.body.email;
+    // console.log(newUsername, newEmail);
+    const pageTitle = "Edit";
+    
+    console.log(username, email);
+    const usernameExists = await User.exists({ $or: [{ username }, { email }] });
+    console.log(usernameExists)
+    if(usernameExists){
+        console.log("Exists");
+        return res.status(404).render("edit-profile", {
+            pageTitle, 
+            errorMessage:"This username/email is already taken."
+        });
+    }
+    console.log("not Exists");
+    try{
+        const updatedUser = await User.findByIdAndUpdate(
+            _id, 
+            {
+                name,
+                email,
+                username,
+                location,
+            },
+            { new: true },
+        );
+            req.session.user = updatedUser;
+            return res.redirect("/users/edit");
+        } catch (error) {
+            console.log(error);
+            return res.render("Home", {  
+                pageTitle: "Home", 
+                errorMessage: error._message,
+            });
+        }
+    */
+        // const updatedUser = await User.findByIdAndUpdate(
+            //     _id, 
+            //     {
+                //         name,
+                //         email,
+                //         username,
+                //         location,
+                //     },
+                //     { new: true },
+                // );
+                // req.session.user = updatedUser;
+                // return res.redirect("/users/edit");
+}
+            
+export const getChangePassword = (req, res) => {
+                if(req.session.user.socialOnly === true) {
+                    return res.redirect("/");
+                }
+                return res.render("users/change-password", {pageTitle: "change Password"});
+}
+export const postChangePassword = async (req, res) => {
+    const { 
+        session: { user: { _id, password }, },
+        body: { oldPassword, newPassword, newPasswordConfirmation }, // form으로부터 받음
+    } = req;
+    
+    const ok = await bcrypt.compare(oldPassword, password);
+    if(!ok) {
+        return res.status(400).render("users/change-password", {
+            pageTitle: "Change Password",
+            errorMessage: "The current password is incorrect",
+        });
+    }
+    if (newPassword !== newPasswordConfirmation) {
+        return res.status(400).render("users/change-password", {
+            pageTitle: "Change Password",
+            errorMessage: "The password does not match the confirmation",
+        });
+    }
+    const user = await User.findById(_id);
+    console.log("Old password:", user.password)
+    user.password = newPassword;
+    console.log("New unhashed pw", user.password)
+    await user.save();
+    req.session.user.password = user.password;
+    console.log("New hashed pw", user.password)
+    return res.redirect("/");
+};
+export const see = async(req, res) => {
+    const { id } = req.params;
+    const user = await User.findById(id).populate("videos");
+    console.log(user);
+    if(!user) {
+        return res.status(404).render("404", { pageTitle: "User not found." });
+    }
+    return res.render("users/profile", { 
+        pageTitle: `${user.name}`, 
+        user, 
+    });
+};
+ 
