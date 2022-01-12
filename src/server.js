@@ -6,6 +6,7 @@ import videoRouter from "./routers/videoRouter"
 import userRouter from "./routers/userRouter"
 import { localMiddleware } from "./middlewares";
 import rootRouter from "./routers/rootRouter";
+import apiRouter from "./routers/apiRouter";
 
 // console.log(process.cwd());
 const app = express();
@@ -25,6 +26,12 @@ app.use(
         store: MongoStore.create({mongoUrl: process.env.DB_URL})
     })
 );
+
+app.use((_, res, next) => {
+    res.header('Cross-Origin-Opener-Policy', 'same-origin');
+    res.header('Cross-Origin-Embedder-Policy', 'require-corp');
+    next();
+});
  
 app.use(localMiddleware);
 app.use("/uploads", express.static("uploads"));
@@ -32,5 +39,6 @@ app.use("/static", express.static("assets"));
 app.use("/", rootRouter);
 app.use("/videos", videoRouter);
 app.use("/users", userRouter);
+app.use("/api", apiRouter);
 
 export default app;
