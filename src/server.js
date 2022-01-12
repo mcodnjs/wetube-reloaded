@@ -1,4 +1,5 @@
 import express from "express";
+import flash from "express-flash";
 import morgan from "morgan";
 import session from "express-session";
 import MongoStore from "connect-mongo";
@@ -33,6 +34,7 @@ app.use((_, res, next) => {
     next();
 });
  
+app.use(flash());
 app.use(localMiddleware);
 app.use("/uploads", express.static("uploads"));
 app.use("/static", express.static("assets"));
