@@ -151,37 +151,47 @@ export const postEdit = async (req, res) => {
         file,
     } = req;
 
-    const updatedUser = await User.findByIdAndUpdate(
-        _id,
-        {
-            avatarUrl: file ? file.path :avatarUrl,
-            name,
-            email,
-            username,
-            location,
-        },
-        { new: true }
-    );
-    req.session.user = updatedUser;
-    return res.redirect("/users/edit");
-    
-   /*
-    // 검사해야하는거: name, email, username
-    // const newUsername = req.body.username;
-    // const newEmail = req.body.email;
-    // console.log(newUsername, newEmail);
-    const pageTitle = "Edit";
-    
-    console.log(username, email);
-    const usernameExists = await User.exists({ $or: [{ username }, { email }] });
-    console.log(usernameExists)
-    if(usernameExists){
-        console.log("Exists");
-        return res.status(404).render("edit-profile", {
-            pageTitle, 
-            errorMessage:"This username/email is already taken."
-        });
+    const oldUsername = req.session.user.username;
+    const oldEmail = req.session.user.email;
+    const pageTitle = "Edit Profile";
+
+    if(oldUsername !== username && oldEmail !== email) {
+        console.log("all");
+        const alreadyExists = await User.exists({ $or: [{ username }, { email }] });
+        if(alreadyExists){
+            console.log("Exists");
+            req.flash("info", "This username/email is already taken.");
+            return res.status(404).render("edit-profile", {
+                pageTitle, 
+                errorMessage:"This username/email is already taken."
+            });
+        }
     }
+    else if(oldUsername !== username) {
+        console.log("username change");
+        const usernameExists = await User.exists({ $or: [{ username }] });
+        req.flash("info", "This username is already taken.");
+        if(usernameExists){
+            console.log("Exists");
+            return res.status(404).render("edit-profile", {
+                pageTitle, 
+                errorMessage:"This username is already taken."
+            });
+        }
+    }
+    else if(oldEmail !== email) {
+        console.log("email change");
+        const emailExists = await User.exists({ $or: [{ email }] });
+        req.flash("info", "This email is already taken.");
+        if(emailExists){
+            console.log("Exists");
+            return res.status(404).render("edit-profile", {
+                pageTitle, 
+                errorMessage:"This email is already taken."
+            });
+        }
+    }
+
     console.log("not Exists");
     try{
         const updatedUser = await User.findByIdAndUpdate(
@@ -194,8 +204,9 @@ export const postEdit = async (req, res) => {
             },
             { new: true },
         );
-            req.session.user = updatedUser;
-            return res.redirect("/users/edit");
+        req.session.user = updatedUser;
+        return res.redirect("/users/edit");
+
         } catch (error) {
             console.log(error);
             return res.render("Home", {  
@@ -203,19 +214,6 @@ export const postEdit = async (req, res) => {
                 errorMessage: error._message,
             });
         }
-    */
-        // const updatedUser = await User.findByIdAndUpdate(
-            //     _id, 
-            //     {
-                //         name,
-                //         email,
-                //         username,
-                //         location,
-                //     },
-                //     { new: true },
-                // );
-                // req.session.user = updatedUser;
-                // return res.redirect("/users/edit");
 }
             
 export const getChangePassword = (req, res) => {
