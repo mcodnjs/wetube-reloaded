@@ -1,4 +1,4 @@
-import Video, { formatHashtags } from "../models/Video";
+import Video, { formatHashtags } from "../models/video";
 import User from "../models/user";
 import Comment from "../models/comment";
 
