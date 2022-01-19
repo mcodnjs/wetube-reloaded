@@ -7,7 +7,6 @@ export const getJoin = (req, res) => res.render("join", {pageTitle: "Join"});
 export const postJoin = async(req, res) => {
     const pageTitle = "Join";
     const {name, username,email,password,password2,location} = req.body;
-    console.log(password, password2);
     if(password !== password2) {
         return res.status(404).render("join", {
             pageTitle,
@@ -32,7 +31,7 @@ export const postJoin = async(req, res) => {
         });
         return res.redirect("/login");
     } catch (error) {
-        console.log(error);
+        console.log("Join error: ", error);
         return res.render("join", {  
             pageTitle: "Join", 
             errorMessage: error._message,
@@ -100,7 +99,6 @@ export const finishGithubLogin = async (req, res) => {
                 Authorization: `token ${access_token}`,
             },
         })).json();
-        console.log(userData);
 
         const emailData = await (await fetch(`${apiUrl}/user/emails`, {
             headers: {
@@ -156,10 +154,8 @@ export const postEdit = async (req, res) => {
     const pageTitle = "Edit Profile";
 
     if(oldUsername !== username && oldEmail !== email) {
-        console.log("all");
         const alreadyExists = await User.exists({ $or: [{ username }, { email }] });
         if(alreadyExists){
-            console.log("Exists");
             req.flash("info", "This username/email is already taken.");
             return res.status(404).render("edit-profile", {
                 pageTitle, 
@@ -168,11 +164,9 @@ export const postEdit = async (req, res) => {
         }
     }
     else if(oldUsername !== username) {
-        console.log("username change");
         const usernameExists = await User.exists({ $or: [{ username }] });
         req.flash("info", "This username is already taken.");
         if(usernameExists){
-            console.log("Exists");
             return res.status(404).render("edit-profile", {
                 pageTitle, 
                 errorMessage:"This username is already taken."
@@ -180,11 +174,9 @@ export const postEdit = async (req, res) => {
         }
     }
     else if(oldEmail !== email) {
-        console.log("email change");
         const emailExists = await User.exists({ $or: [{ email }] });
         req.flash("info", "This email is already taken.");
         if(emailExists){
-            console.log("Exists");
             return res.status(404).render("edit-profile", {
                 pageTitle, 
                 errorMessage:"This email is already taken."
@@ -192,7 +184,6 @@ export const postEdit = async (req, res) => {
         }
     }
 
-    console.log("not Exists");
     try{
         const updatedUser = await User.findByIdAndUpdate(
             _id, 
@@ -208,7 +199,7 @@ export const postEdit = async (req, res) => {
         return res.redirect("/users/edit");
 
         } catch (error) {
-            console.log(error);
+            console.log("User Update error: ", error);
             return res.render("Home", {  
                 pageTitle: "Home", 
                 errorMessage: error._message,
@@ -243,19 +234,18 @@ export const postChangePassword = async (req, res) => {
         });
     }
     const user = await User.findById(_id);
-    console.log("Old password:", user.password)
+    // console.log("Old password:", user.password)
     user.password = newPassword;
-    console.log("New unhashed pw", user.password)
+    // console.log("New unhashed pw", user.password)
     await user.save();
     req.flash("info", "Password updated");
     req.session.user.password = user.password;
-    console.log("New hashed pw", user.password)
+    // console.log("New hashed pw", user.password)
     return res.redirect("/");
 };
 export const see = async(req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate("videos");
-    console.log(user);
     if(!user) {
         return res.status(404).render("404", { pageTitle: "User not found." });
     }

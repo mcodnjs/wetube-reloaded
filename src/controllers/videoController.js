@@ -80,7 +80,7 @@ export const postUpload = async (req, res) => {
         user.save();
         return res.redirect("/");   
     } catch (error) {
-        console.log(error);
+        console.log("Video Upload error: ", error);
         return res.render("upload", {  
             pageTitle: "Upload Video", 
             errorMessage: error._message,
@@ -136,8 +136,6 @@ export const createComment = async(req, res) => {
         params: {id},
     } = req;
 
-    console.log(user, text, id);
-
     const video = await Video.findById(id);
     if(!video) {
         return sendStatus(404);
@@ -159,9 +157,7 @@ export const deleteComment = async(req, res) => {
         params: {id},
     } = req;
 
-    console.log(user, id);
     const comment = await Comment.findById(id);
-    console.log(comment);
 
     if(!comment) {
         return res.sendStatus(404);
@@ -170,8 +166,6 @@ export const deleteComment = async(req, res) => {
     if(String(comment.owner._id) !== user._id) {
         return res.sendStatus(404);
     }
-    // console.log(comment.video);
-    // console.log(String(comment.owner._id), user._id);
     const videoId = String(comment.video);
     const video = await Video.findById(videoId).populate("owner").populate("comments");
     await Comment.findByIdAndDelete(id);

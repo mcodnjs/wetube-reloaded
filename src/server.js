@@ -9,7 +9,6 @@ import { localMiddleware } from "./middlewares";
 import rootRouter from "./routers/rootRouter";
 import apiRouter from "./routers/apiRouter";
 
-// console.log(process.cwd());
 const app = express();
 const logger = morgan("dev");
 

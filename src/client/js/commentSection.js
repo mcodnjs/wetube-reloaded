@@ -39,15 +39,12 @@ const deleteComment = (id) => {
 
 const handleDelete = async (event) => {
 
-    console.log(event);
     event.preventDefault();
     const commentId = event.target.dataset.id;
-    console.log("delete:", commentId);
 
     const response = await fetch(`/api/comments/${commentId}/comment`, {
         method: "DELETE",
     });
-    console.log(response);
 
     if(response.status === 201) {
         deleteComment(commentId);
